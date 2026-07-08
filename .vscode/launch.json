@@ -8,7 +8,7 @@
             "name": "Python: Launch Project in Integrated Terminal",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/TTMediaBot.py",
+            "program": "${workspaceFolder}/Cider.py",
             "console": "integratedTerminal"
         }
     ]

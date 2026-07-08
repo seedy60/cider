@@ -1412,9 +1412,14 @@ class MPV(object):
 
     def loadfile(self, filename, mode="replace", **options):
         """Mapped mpv loadfile command, see man mpv(1)."""
-        self.command(
-            "loadfile", filename.encode(fs_enc), mode, MPV._encode_options(options)
-        )
+        args = ["loadfile", filename.encode(fs_enc), mode]
+        if options:
+            # Newer libmpv (mpv 0.38+) inserts an <index> argument before
+            # <options>; -1 keeps the default append position. With no options we
+            # omit both trailing args so the call stays valid on every libmpv
+            # version (an empty options string would be misread as the index).
+            args += [-1, MPV._encode_options(options)]
+        self.command(*args)
 
     def loadlist(self, playlist, mode="replace"):
         """Mapped mpv loadlist command, see man mpv(1)."""

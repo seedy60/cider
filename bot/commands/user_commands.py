@@ -209,6 +209,19 @@ class PreviousTrackCommand(Command):
             return self.translator.translate("Nothing is playing")
 
 
+class NowPlayingCommand(Command):
+    @property
+    def help(self) -> str:
+        return self.translator.translate(
+            "Shows the title of the currently playing media"
+        )
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        if self.player.state == State.Stopped:
+            return self.translator.translate("Nothing is playing")
+        return self.player.track.name or self.player.track.url
+
+
 class ModeCommand(Command):
     @property
     def help(self) -> str:

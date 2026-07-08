@@ -1,0 +1,12 @@
+[Unit]
+Description=Cider
+Requires=pulseaudio.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/Cider
+ExecStart=/opt/Cider/Cider.sh -c /opt/Cider/config.json
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

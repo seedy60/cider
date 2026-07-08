@@ -1,4 +1,4 @@
-# TTMediaBot
+# Cider
 A media streaming bot for TeamTalk.
 
 ## Installation and usage
@@ -8,31 +8,31 @@ A media streaming bot for TeamTalk.
 * If you are going to use Linux as your main system for a bot, you will need pulseaudio and libmpv  to route and play audio, but if you re using Windows, PulseAudio is not available, so you will need a virtual audio cable driver, such as VBCable and of course, the mpv player library must also be installed. on Windows this library can be installed using an integrated tool. On Debian-based systems the required package is libmpv1.
 
 ### Installation
-* Download TTMediaBot;
+* Download Cider;
 * install all python requirements from requirements.txt, using the "pip3 install -r requirements.txt" or just "pip install -r requirements.txt" command, without quotes;;
 * Run ttsdk_downloader.py from the tools folder;
 * If you're using Windows run libmpv_win_downloader.py from the tools folder;
 * Copy or rename config_default.json to config.json;
 * Fill in all required fields in config.json (Config description will be there later);
-* On Linux run TTMediaBot.sh --devices to list all available devices and their numbers;
-* On Windows run TTMediaBot.py --devices to list all available devices with their numbers;
+* On Linux run Cider.sh --devices to list all available devices and their numbers;
+* On Windows run Cider.py --devices to list all available devices with their numbers;
 * Edit config.json (change device numbers appropriately for your purposes);
 
 ### Usage
-* On Linux run ./TTMediaBot.sh;
-* On Windows run python TTMediaBot.py directly.
+* On Linux run ./Cider.sh;
+* On Windows run python Cider.py directly.
 
 ### Running in Docker
 You can also run the bot in a Docker container.
 First of all, You should build an image from the provided Dockerfile:
 ```sh
-docker build -t ttmediabot .
+docker build -t cider .
 ```
 Note: The first run could take some time.
 
 Then you can run the Docker container with the following command:
 ```sh
-docker run --rm --name ttmb_1 -dv <path/to/data/directory>:/home/ttbot/data ttmediabot
+docker run --rm --name cider_1 -dv <path/to/data/directory>:/home/ttbot/data cider
 ```
 <path/to/data/directory> here means a directory where config.json file will be stored. It should not contain any other unrelated data.
 The cache and  log files will be stored in the specified directory.
@@ -55,16 +55,16 @@ The cache and  log files will be stored in the specified directory.
 * type $pulseaudio --start
 * Next command creates null sink and this sink can be monitored by default pulse input device.
 $pacmd load-module module-null-sink
-* then run ./TTMediaBot.sh --devices and check its numbers.
+* then run ./Cider.sh --devices and check its numbers.
 output should be null audio output, input should be pulse.
 * put this numbers to your config.json.
 
 ### windows variant
-* install VB-cable, run "TTMediaBot.py --devices" and check numbers of VB-cable devices
+* install VB-cable, run "Cider.py --devices" and check numbers of VB-cable devices
 * put this numbers to your config.json.
 
 ## Some notes about the Windows variant
-* When listing input and output devices in the Windows variant of TTMediaBot, please note, that the input device will be doubled, i.e., if the output device is line 1 with number 3, the input device for line 1 will be listed twice, at number 5 and, for example, at number 7.
+* When listing input and output devices in the Windows variant of Cider, please note, that the input device will be doubled, i.e., if the output device is line 1 with number 3, the input device for line 1 will be listed twice, at number 5 and, for example, at number 7.
 * The correct number will be the last one as input, that is, if we selected the output as line 1 with the number 3, the input device would be line 1 with number 7 of the two options, number 5 and number 7.
 * The same method applies to all numbers and all Input / Outputs.
 

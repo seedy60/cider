@@ -104,7 +104,7 @@ def main():
     login = ""
     password = ""
     try:
-        print("VK Authentication Helper for TTMediaBot")
+        print("VK Authentication Helper for Cider")
         print()
         print("Enter your VK credentials to continue")
         while not login:

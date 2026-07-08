@@ -7,5 +7,3 @@ pyshorteners
 requests
 vk-api
 yandex_music
-youtube-search-python
-yt-dlp

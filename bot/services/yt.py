@@ -1,14 +1,12 @@
 from __future__ import annotations
+import json
 import logging
 import os
+import subprocess
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bot import Bot
-
-from yt_dlp import YoutubeDL
-from yt_dlp.downloader import get_suitable_downloader
-from youtubesearchpython import VideosSearch
 
 from bot.config.models import YtModel
 
@@ -16,6 +14,14 @@ from bot.player.enums import TrackType
 from bot.player.track import Track
 from bot.services import Service as _Service
 from bot import errors
+
+
+# Audio-only format selection; avoids native HLS so a single stream is picked.
+_FORMAT = "m4a/bestaudio/best[protocol!=m3u8_native]/best"
+
+# Suppress the console window yt-dlp would otherwise flash on Windows when the bot
+# runs without an attached console; 0 (no-op) everywhere else.
+_CREATIONFLAGS = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 
 class YtService(_Service):
@@ -31,24 +37,59 @@ class YtService(_Service):
         self.hidden = False
 
     def initialize(self):
-        self._ydl_config = {
-            "skip_download": True,
-            "format": "m4a/bestaudio/best[protocol!=m3u8_native]/best",
-            "socket_timeout": 5,
-            "logger": logging.getLogger("root"),
-        }
-
+        # We shell out to the standalone yt-dlp binary (configurable path) instead
+        # of the Python library so it can be updated independently of the bot.
+        self._base_args = [
+            self.config.yt_dlp_path,
+            "--ignore-config",
+            "--no-warnings",
+            "--socket-timeout",
+            "5",
+        ]
         if self.config.cookiefile_path and os.path.isfile(self.config.cookiefile_path):
-            self._ydl_config |= {"cookiefile": self.config.cookiefile_path}
-            
+            self._base_args += ["--cookies", self.config.cookiefile_path]
+
+    def _run_json(self, args: List[str]) -> Dict[str, Any]:
+        process = subprocess.run(
+            self._base_args + args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            creationflags=_CREATIONFLAGS,
+        )
+        if process.returncode != 0:
+            logging.error(
+                "yt-dlp failed (%s): %s",
+                process.returncode,
+                process.stderr.decode(errors="replace").strip(),
+            )
+            raise errors.ServiceError()
+        try:
+            return json.loads(process.stdout)
+        except json.JSONDecodeError:
+            raise errors.ServiceError()
+
     def download(self, track: Track, file_path: str) -> None:
-        info = track.extra_info
-        if not info:
+        webpage_url = (track.extra_info or {}).get("webpage_url")
+        if not webpage_url:
             super().download(track, file_path)
             return
-        with YoutubeDL(self._ydl_config) as ydl:
-            dl = get_suitable_downloader(info)(ydl, self._ydl_config)
-            dl.download(file_path, info)
+        # "-o -" streams the media to stdout, guaranteeing the file lands exactly
+        # at file_path regardless of the container extension yt-dlp would choose.
+        with open(file_path, "wb") as file:
+            process = subprocess.run(
+                self._base_args
+                + ["--no-playlist", "-f", _FORMAT, "-o", "-", webpage_url],
+                stdout=file,
+                stderr=subprocess.PIPE,
+                creationflags=_CREATIONFLAGS,
+            )
+        if process.returncode != 0:
+            logging.error(
+                "yt-dlp download failed (%s): %s",
+                process.returncode,
+                process.stderr.decode(errors="replace").strip(),
+            )
+            raise errors.ServiceError()
 
     def get(
         self,
@@ -56,57 +97,55 @@ class YtService(_Service):
         extra_info: Optional[Dict[str, Any]] = None,
         process: bool = False,
     ) -> List[Track]:
-        if not (url or extra_info):
+        target = url or (extra_info or {}).get("webpage_url") or (extra_info or {}).get("url")
+        if not target:
             raise errors.InvalidArgumentError()
-        with YoutubeDL(self._ydl_config) as ydl:
-            if not extra_info:
-                info = ydl.extract_info(url, process=False)
-            else:
-                info = extra_info
-            info_type = None
-            if "_type" in info:
-                info_type = info["_type"]
-            if info_type == "url" and not info["ie_key"]:
-                return self.get(info["url"], process=False)
-            elif info_type == "playlist":
-                tracks: List[Track] = []
-                for entry in info["entries"]:
-                    data = self.get("", extra_info=entry, process=False)
-                    tracks += data
-                return tracks
-            if not process:
-                return [
-                    Track(service=self.name, extra_info=info, type=TrackType.Dynamic)
-                ]
-            try:
-                stream = ydl.process_ie_result(info)
-            except Exception:
-                raise errors.ServiceError()
-            if "url" in stream:
-                url = stream["url"]
-            else:
-                raise errors.ServiceError()
-            title = stream["title"]
-            if "uploader" in stream:
-                title += " - {}".format(stream["uploader"])
-            format = stream["ext"]
-            if "is_live" in stream and stream["is_live"]:
-                type = TrackType.Live
-            else:
-                type = TrackType.Default
-            return [
-                Track(service=self.name, url=url, name=title, format=format, type=type, extra_info=stream)
-            ]
+        if process:
+            return self._resolve(target)
+        # Flat extraction is enough to tell a single video from a playlist.
+        info = self._run_json(["--flat-playlist", "-J", target])
+        if info.get("_type") == "playlist":
+            tracks: List[Track] = []
+            for entry in info.get("entries") or []:
+                entry_url = entry.get("url") if entry else None
+                if entry_url:
+                    tracks.append(
+                        Track(service=self.name, url=entry_url, type=TrackType.Dynamic)
+                    )
+            return tracks
+        return [Track(service=self.name, url=target, type=TrackType.Dynamic)]
+
+    def _resolve(self, target: str) -> List[Track]:
+        info = self._run_json(["--no-playlist", "-J", "-f", _FORMAT, target])
+        stream_url = info.get("url")
+        if not stream_url:
+            downloads = info.get("requested_downloads") or []
+            if downloads:
+                stream_url = downloads[0].get("url")
+        if not stream_url:
+            raise errors.ServiceError()
+        title = info.get("title") or ""
+        if info.get("uploader"):
+            title += " - {}".format(info["uploader"])
+        return [
+            Track(
+                service=self.name,
+                url=stream_url,
+                name=title,
+                format=info.get("ext") or "",
+                type=TrackType.Live if info.get("is_live") else TrackType.Default,
+                extra_info={"webpage_url": info.get("webpage_url") or target},
+            )
+        ]
 
     def search(self, query: str) -> List[Track]:
-        search = VideosSearch(query, limit=300).result()
-        if search["result"]:
-            tracks: List[Track] = []
-            for video in search["result"]:
-                track = Track(
-                    service=self.name, url=video["link"], type=TrackType.Dynamic
+        info = self._run_json(["--flat-playlist", "-J", f"ytsearch300:{query}"])
+        tracks: List[Track] = []
+        for entry in info.get("entries") or []:
+            if entry and entry.get("ie_key") == "Youtube" and entry.get("url"):
+                tracks.append(
+                    Track(service=self.name, url=entry["url"], type=TrackType.Dynamic)
                 )
-                tracks.append(track)
-            return tracks
-        else:
+        if not tracks:
             raise errors.NothingFoundError("")
+        return tracks

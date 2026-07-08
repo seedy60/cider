@@ -5,7 +5,7 @@ from typing import Callable, TYPE_CHECKING
 if TYPE_CHECKING:
     from bot.translator import Translator
 
-app_name = "TTMediaBot"
+app_name = "Cider"
 app_version = "2.3.1"
 client_name = app_name + "-V" + app_version
 about_text: Callable[[Translator], str] = lambda translator: translator.translate(

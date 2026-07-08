@@ -3,7 +3,7 @@
     "general": {
         "language": "en",
         "send_channel_messages": true,
-        "cache_file_name": "TTMediaBotCache.dat",
+        "cache_file_name": "CiderCache.dat",
         "blocked_commands": [],
         "delete_uploaded_files_after": 300,
         "time_format": "%H:%M",
@@ -26,7 +26,7 @@
         "tcp_port": 10333,
         "udp_port": 10333,
         "encrypted": false,
-        "nickname": "TTMediaBot",
+        "nickname": "Cider",
         "status": "",
         "gender": "n",
         "username": "",
@@ -60,7 +60,8 @@
         },
         "yt": {
             "enabled": true,
-            "cookiefile_path": ""
+            "cookiefile_path": "",
+            "yt_dlp_path": "yt-dlp"
         }
     },
     "logger": {
@@ -68,7 +69,7 @@
         "level": "INFO",
         "format": "%(levelname)s [%(asctime)s]: %(message)s in %(threadName)s file: %(filename)s line %(lineno)d function %(funcName)s",
         "mode": "FILE",
-        "file_name": "TTMediaBot.log",
+        "file_name": "Cider.log",
         "max_file_size": 0,
         "backup_count": 0
     },

@@ -44,7 +44,7 @@ def main():
     login = ""
     password = ""
     try:
-        print("Yandex music Authentication Helper for TTMediaBot")
+        print("Yandex music Authentication Helper for Cider")
         print()
         print("Enter your Yandex credentials to continue")
         while not login:

@@ -593,3 +593,12 @@ msgstr "No se ha proporcionado un token"
 #: /mnt/c/Users/inovegil/repos_git/TTMediaBot/bot/services/yam.py:46
 msgid "You don't have Yandex Plus"
 msgstr "No tienes Yandex Plus"
+
+msgid "Paused"
+msgstr ""
+
+msgid "Shows the title of the currently playing media"
+msgstr ""
+
+msgid "Streaming media"
+msgstr ""

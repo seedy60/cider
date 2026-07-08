@@ -7,10 +7,10 @@ import subprocess
 
 cd = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 locale_path = os.path.join(cd, "locale")
-pot_file_path = os.path.join(locale_path, "TTMediaBot.pot")
-source_paths = [os.path.join(cd, "bot"), os.path.join(cd, "TTMediaBot.py")]
+pot_file_path = os.path.join(locale_path, "Cider.pot")
+source_paths = [os.path.join(cd, "bot"), os.path.join(cd, "Cider.py")]
 babel_prefix = "{} -m babel.messages.frontend".format(sys.executable)
-locale_domain = "TTMediaBot"
+locale_domain = "Cider"
 
 
 def extract():

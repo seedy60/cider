@@ -588,3 +588,12 @@ msgstr "Token tidak disediakan."
 #: D:/appdata/TTMediaBot/bot/services/yam.py:46
 msgid "You don't have Yandex Plus"
 msgstr "Anda tidak memiliki Yandex Plus."
+
+msgid "Paused"
+msgstr ""
+
+msgid "Shows the title of the currently playing media"
+msgstr ""
+
+msgid "Streaming media"
+msgstr ""

@@ -767,3 +767,12 @@ msgstr ""
 #~ msgid "You don't have Yandex Plus"
 #~ msgstr ""
 
+
+msgid "Paused"
+msgstr ""
+
+msgid "Shows the title of the currently playing media"
+msgstr ""
+
+msgid "Streaming media"
+msgstr ""

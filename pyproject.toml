@@ -1,0 +1,15 @@
+[project]
+name = "ttmediabot"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "babel>=2.18.0",
+    "beautifulsoup4>=4.15.0",
+    "patool>=4.0.5",
+    "portalocker>=3.2.0",
+    "pydantic>=2.13.4",
+    "pyshorteners>=1.0.1",
+    "requests>=2.34.2",
+    "vk-api>=11.10.0",
+    "yandex-music>=3.0.0",
+]
