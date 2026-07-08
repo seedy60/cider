@@ -63,7 +63,8 @@
         "yt": {
             "enabled": true,
             "cookiefile_path": "",
-            "yt_dlp_path": "yt-dlp"
+            "yt_dlp_path": "yt-dlp",
+            "extra_args": []
         }
     },
     "logger": {

@@ -64,6 +64,10 @@ class YtModel(BaseModel):
     enabled: bool = True
     cookiefile_path: str = ""
     yt_dlp_path: str = "yt-dlp"
+    # Extra arguments passed to every yt-dlp invocation, e.g.
+    # ["--js-runtimes", "deno:/home/user/.deno/bin/deno"] or a proxy/extractor
+    # tweak. Lets you adapt to yt-dlp/YouTube changes without editing code.
+    extra_args: List[str] = []
 
 
 class YamModel(BaseModel):

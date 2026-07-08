@@ -47,6 +47,8 @@ class YtService(_Service):
         ]
         if self.config.cookiefile_path and os.path.isfile(self.config.cookiefile_path):
             self._base_args += ["--cookies", self.config.cookiefile_path]
+        if self.config.extra_args:
+            self._base_args += list(self.config.extra_args)
 
     @staticmethod
     def _summarize_error(stderr: str) -> str:
