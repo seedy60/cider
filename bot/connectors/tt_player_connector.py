@@ -16,7 +16,7 @@ class TTPlayerConnector(Thread):
         super().__init__(daemon=True)
         self.name = "TTPlayerConnector"
         self.player = bot.player
-        self.ttclient = bot.ttclient
+        self.ttclients = bot.ttclients
         self.translator = bot.translator
 
     def run(self):
@@ -30,18 +30,21 @@ class TTPlayerConnector(Thread):
                 if self.player.state != last_player_state:
                     last_player_state = self.player.state
                     if self.player.state == State.Playing:
-                        self.ttclient.enable_voice_transmission()
-                        self.ttclient.change_status_text(
-                            self.translator.translate("Streaming media")
-                        )
+                        for ttclient in self.ttclients:
+                            ttclient.enable_voice_transmission()
+                            ttclient.change_status_text(
+                                self.translator.translate("Streaming media")
+                            )
                     elif self.player.state == State.Stopped:
-                        self.ttclient.disable_voice_transmission()
-                        self.ttclient.change_status_text("")
+                        for ttclient in self.ttclients:
+                            ttclient.disable_voice_transmission()
+                            ttclient.change_status_text("")
                     elif self.player.state == State.Paused:
-                        self.ttclient.disable_voice_transmission()
-                        self.ttclient.change_status_text(
-                            self.translator.translate("Paused")
-                        )
+                        for ttclient in self.ttclients:
+                            ttclient.disable_voice_transmission()
+                            ttclient.change_status_text(
+                                self.translator.translate("Paused")
+                            )
             except Exception:
                 logging.error("", exc_info=True)
             time.sleep(app_vars.loop_timeout)

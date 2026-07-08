@@ -67,7 +67,13 @@ class Bot:
         self.cache = self.cache_manager.cache
         self.log_file_name = log_file_name
         self.player = player.Player(self)
-        self.ttclient = TeamTalk.TeamTalk(self)
+        self.ttclients = [
+            TeamTalk.TeamTalk(self, server_config)
+            for server_config in self.config.teamtalk
+        ]
+        # The first configured server is the primary one, used as the default
+        # context (e.g. startup commands, help) where no origin server applies.
+        self.ttclient = self.ttclients[0]
         self.tt_player_connector = connectors.TTPlayerConnector(self)
         self.sound_device_manager = sound_devices.SoundDeviceManager(self)
         self.service_manager = services.ServiceManager(self)
@@ -79,7 +85,8 @@ class Bot:
             logger.initialize_logger(self)
         logging.debug("Initializing")
         self.sound_device_manager.initialize()
-        self.ttclient.initialize()
+        for ttclient in self.ttclients:
+            ttclient.initialize()
         self.player.initialize()
         self.service_manager.initialize()
         logging.debug("Initialized")
@@ -100,25 +107,30 @@ class Bot:
         )
         for command in self.config.general.start_commands:
             message = Message(text=command, user=startup_context_user, channel=self.ttclient.channel, type=MessageType.User)
+            message.ttclient = self.ttclient
             self.command_processor(message)
         self._close = False
         while not self._close:
-            try:
-                message = self.ttclient.message_queue.get_nowait()
-                logging.info(
-                    "New message {text} from {username}".format(
-                        text=message.text, username=message.user.username
-                    )
-                )
-                self.command_processor(message)
-            except queue.Empty:
-                pass
+            for ttclient in self.ttclients:
+                try:
+                    while True:
+                        message = ttclient.message_queue.get_nowait()
+                        message.ttclient = ttclient
+                        logging.info(
+                            "New message {text} from {username}".format(
+                                text=message.text, username=message.user.username
+                            )
+                        )
+                        self.command_processor(message)
+                except queue.Empty:
+                    pass
             time.sleep(app_vars.loop_timeout)
 
     def close(self) -> None:
         logging.debug("Closing bot")
         self.player.close()
-        self.ttclient.close()
+        for ttclient in self.ttclients:
+            ttclient.close()
         self.tt_player_connector.close()
         self.config_manager.close()
         self.cache_manager.close()

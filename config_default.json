@@ -21,33 +21,35 @@
         "seek_step": 5,
         "player_options": {}
     },
-    "teamtalk": {
-        "hostname": "localhost",
-        "tcp_port": 10333,
-        "udp_port": 10333,
-        "encrypted": false,
-        "nickname": "Cider",
-        "status": "",
-        "gender": "n",
-        "username": "",
-        "password": "",
-        "channel": "/",
-        "channel_password": "",
-        "license_name": "",
-        "license_key": "",
-        "reconnection_attempts": -1,
-        "reconnection_timeout": 10,
-        "users": {
-            "admins": [
-                "admin"
-            ],
-            "banned_users": []
-        },
-        "event_handling": {
-            "load_event_handlers": false,
-            "event_handlers_file_name": "event_handlers.py"
+    "teamtalk": [
+        {
+            "hostname": "localhost",
+            "tcp_port": 10333,
+            "udp_port": 10333,
+            "encrypted": false,
+            "nickname": "Cider",
+            "status": "",
+            "gender": "n",
+            "username": "",
+            "password": "",
+            "channel": "/",
+            "channel_password": "",
+            "license_name": "",
+            "license_key": "",
+            "reconnection_attempts": -1,
+            "reconnection_timeout": 10,
+            "users": {
+                "admins": [
+                    "admin"
+                ],
+                "banned_users": []
+            },
+            "event_handling": {
+                "load_event_handlers": false,
+                "event_handlers_file_name": "event_handlers.py"
+            }
         }
-    },
+    ],
     "services": {
         "default_service": "vk",
         "vk": {

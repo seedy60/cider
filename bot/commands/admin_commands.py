@@ -59,7 +59,7 @@ class ChangeGenderCommand(Command):
     def __call__(self, arg: str, user: User) -> Optional[str]:
         try:
             self.ttclient.change_gender(arg)
-            self.config.teamtalk.gender = arg
+            self.ttclient.config.gender = arg
         except KeyError:
             raise errors.InvalidArgumentError()
 
@@ -94,7 +94,7 @@ class ChangeNicknameCommand(Command):
 
     def __call__(self, arg: str, user: User) -> Optional[str]:
         self.ttclient.change_nickname(arg)
-        self.config.teamtalk.nickname = arg
+        self.ttclient.config.nickname = arg
 
 
 class ClearCacheCommand(Command):
@@ -130,8 +130,8 @@ class JoinChannelCommand(Command):
     def __call__(self, arg: str, user: User) -> Optional[str]:
         args = self.command_processor.split_arg(arg)
         if not arg:
-            channel = self.config.teamtalk.channel
-            password = self.config.teamtalk.channel_password
+            channel = self.ttclient.config.channel
+            password = self.ttclient.config.channel_password
         elif len(args) == 2:
             channel = args[0]
             password = args[1]
@@ -243,7 +243,7 @@ class ChangeStatusCommand(Command):
 
     def __call__(self, arg: str, user: User) -> Optional[str]:
         self.ttclient.change_status_text(arg)
-        self.config.teamtalk.status = arg
+        self.ttclient.config.status = arg
 
 
 class EventHandlingCommand(Command):
@@ -252,12 +252,12 @@ class EventHandlingCommand(Command):
         return self.translator.translate("Enables or disables event handling")
 
     def __call__(self, arg: str, user: User) -> Optional[str]:
-        self.config.teamtalk.event_handling.load_event_handlers = (
-            not self.config.teamtalk.event_handling.load_event_handlers
+        self.ttclient.config.event_handling.load_event_handlers = (
+            not self.ttclient.config.event_handling.load_event_handlers
         )
         return (
             self.translator.translate("Event handling is enabled")
-            if self.config.teamtalk.event_handling.load_event_handlers
+            if self.ttclient.config.event_handling.load_event_handlers
             else self.translator.translate("Event handling is disabled")
         )
 
@@ -300,12 +300,12 @@ class AdminUsersCommand(Command):
     def __call__(self, arg: str, user: User) -> Optional[str]:
         if arg:
             if arg[0] == "+":
-                self.config.teamtalk.users.admins.append(arg[1::])
+                self.ttclient.config.users.admins.append(arg[1::])
                 return self.translator.translate("Added")
             elif arg[0] == "-":
                 try:
-                    del self.config.teamtalk.users.admins[
-                        self.config.teamtalk.users.admins.index(arg[1::])
+                    del self.ttclient.config.users.admins[
+                        self.ttclient.config.users.admins.index(arg[1::])
                     ]
                     return self.translator.translate("Deleted")
                 except ValueError:
@@ -313,7 +313,7 @@ class AdminUsersCommand(Command):
                         "This user is not in the admin list"
                     )
         else:
-            admins = self.config.teamtalk.users.admins.copy()
+            admins = self.ttclient.config.users.admins.copy()
             if len(admins) > 0:
                 if "" in admins:
                     admins[admins.index("")] = "<Anonymous>"
@@ -332,18 +332,18 @@ class BannedUsersCommand(Command):
     def __call__(self, arg: str, user: User) -> Optional[str]:
         if arg:
             if arg[0] == "+":
-                self.config.teamtalk.users.banned_users.append(arg[1::])
+                self.ttclient.config.users.banned_users.append(arg[1::])
                 return self.translator.translate("Added")
             elif arg[0] == "-":
                 try:
-                    del self.config.teamtalk.users.banned_users[
-                        self.config.teamtalk.users.banned_users.index(arg[1::])
+                    del self.ttclient.config.users.banned_users[
+                        self.ttclient.config.users.banned_users.index(arg[1::])
                     ]
                     return self.translator.translate("Deleted")
                 except ValueError:
                     return self.translator.translate("This user is not banned")
         else:
-            banned_users = self.config.teamtalk.users.banned_users.copy()
+            banned_users = self.ttclient.config.users.banned_users.copy()
             if len(banned_users) > 0:
                 if "" in banned_users:
                     banned_users[banned_users.index("")] = "<Anonymous>"

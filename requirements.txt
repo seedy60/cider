@@ -6,4 +6,5 @@ pydantic
 pyshorteners
 requests
 vk-api
+wxpython; sys_platform == "win32"
 yandex_music

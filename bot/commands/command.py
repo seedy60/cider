@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 class Command:
-    def __init__(self, command_processor: CommandProcessor):
+    def __init__(self, command_processor: CommandProcessor, ttclient=None):
         self._bot = command_processor.bot
         self.cache = command_processor.cache
         self.cache_manager = command_processor.cache_manager
@@ -20,7 +20,9 @@ class Command:
         self.player = command_processor.player
         self.service_manager = command_processor.service_manager
         self._task_processor = command_processor.task_processor
-        self.ttclient = command_processor.ttclient
+        # The server that this command instance acts on. Defaults to the primary
+        # client (e.g. for help text) when no originating server is supplied.
+        self.ttclient = ttclient if ttclient is not None else command_processor.ttclient
         self.translator = command_processor.translator
 
     @property

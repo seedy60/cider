@@ -26,9 +26,9 @@ class SoundDeviceManager:
         self.output_device_index = self.config.sound_devices.output_device
         self.input_device_index = self.config.sound_devices.input_device
         self.player = bot.player
-        self.ttclient = bot.ttclient
+        self.ttclients = bot.ttclients
         self.output_devices = self.player.get_output_devices()
-        self.input_devices = self.ttclient.get_input_devices()
+        self.input_devices = self.ttclients[0].get_input_devices()
 
     def initialize(self) -> None:
         logging.debug("Initializing sound devices")
@@ -41,11 +41,13 @@ class SoundDeviceManager:
             logging.error(error)
             sys.exit(error)
         try:
-            self.ttclient.set_input_device(
-                int(self.input_devices[self.input_device_index].id)
-            )
+            input_device_id = int(self.input_devices[self.input_device_index].id)
         except IndexError:
             error = "Incorrect input device index: " + str(self.input_device_index)
             logging.error(error)
             sys.exit(error)
+        # Every server transmits the same audio, so each client captures the
+        # same (virtual) input device that the player outputs to.
+        for ttclient in self.ttclients:
+            ttclient.set_input_device(input_device_id)
         logging.debug("Sound devices initialized")

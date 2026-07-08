@@ -82,38 +82,40 @@ class CommandProcessor:
         command_thread.start()
 
     def _run(self, message: Message) -> None:
+        ttclient = message.ttclient if message.ttclient is not None else self.ttclient
         try:
             command_name, arg = self.parse_command(message.text)
-            if self.check_access(message.user, command_name):
+            if self.check_access(message.user, command_name, ttclient):
                 command_class = self.get_command(command_name, message.user)
-                command = command_class(self)
+                command = command_class(self, ttclient)
                 self.current_command_id = id(command)
                 result = command(arg, message.user)
                 if result:
-                    self.ttclient.send_message(
+                    ttclient.send_message(
                         result,
                         message.user,
-                    )  # here was command.ttclient later
+                    )
         except errors.InvalidArgumentError:
-            self.ttclient.send_message(
+            ttclient.send_message(
                 self.help(command_name, message.user),
                 message.user,
             )
         except errors.AccessDeniedError as e:
-            self.ttclient.send_message(str(e), message.user)
+            ttclient.send_message(str(e), message.user)
         except (errors.ParseCommandError, errors.UnknownCommandError):
-            self.ttclient.send_message(
+            ttclient.send_message(
                 self.translator.translate('Unknown command. Send "h" for help.'),
                 message.user,
             )
         except Exception as e:
             logging.error("", exc_info=True)
-            self.ttclient.send_message(
+            ttclient.send_message(
                 self.translator.translate("Error: {}").format(str(e)),
                 message.user,
             )
 
-    def check_access(self, user: User, command: str) -> bool:
+    def check_access(self, user: User, command: str, ttclient=None) -> bool:
+        ttclient = ttclient if ttclient is not None else self.ttclient
         if (
             not user.is_admin and user.type != UserType.Admin
         ) or app_vars.app_name in user.client_name:
@@ -123,7 +125,7 @@ class CommandProcessor:
                 raise errors.AccessDeniedError(
                     self.translator.translate("You are banned"),
                 )
-            elif user.channel.id != self.ttclient.channel.id:
+            elif user.channel.id != ttclient.channel.id:
                 raise errors.AccessDeniedError(
                     self.translator.translate("You are not in bot's channel"),
                 )

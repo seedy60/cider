@@ -309,6 +309,9 @@ class Message:
         self.channel = channel
         self.user = user
         self.type = type
+        # Set by the bot to the TeamTalk client the message arrived on, so
+        # replies and actions are routed back to the originating server.
+        self.ttclient = None
 
 
 class File:

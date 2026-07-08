@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class GeneralModel(BaseModel):
@@ -99,7 +99,18 @@ class ConfigModel(BaseModel):
     general: GeneralModel = GeneralModel()
     sound_devices: SoundDevicesModel = SoundDevicesModel()
     player: PlayerModel = PlayerModel()
-    teamtalk: TeamTalkModel = TeamTalkModel()
+    teamtalk: List[TeamTalkModel] = [TeamTalkModel()]
     services: ServicesModel = ServicesModel()
     logger: LoggerModel = LoggerModel()
     shortening: ShorteningModel = ShorteningModel()
+
+    @field_validator("teamtalk", mode="before")
+    @classmethod
+    def _coerce_teamtalk_to_list(cls, value: Any) -> Any:
+        # Backward compatibility: a single server config (an object) is treated
+        # as a one-server list so existing config.json files keep working.
+        if isinstance(value, (dict, TeamTalkModel)):
+            return [value]
+        if isinstance(value, list) and len(value) == 0:
+            raise ValueError("at least one TeamTalk server must be configured")
+        return value

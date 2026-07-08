@@ -26,6 +26,7 @@ re_line_endings = re.compile("[\\r\\n]")
 
 if TYPE_CHECKING:
     from bot import Bot
+    from bot.config.models import TeamTalkModel
 
 
 def _str(data: AnyStr) -> AnyStr:
@@ -74,8 +75,8 @@ def split(text: str, max_length: int = app_vars.max_message_length) -> List[str]
 
 
 class TeamTalk:
-    def __init__(self, bot: Bot) -> None:
-        self.config = bot.config.teamtalk
+    def __init__(self, bot: Bot, config: "TeamTalkModel") -> None:
+        self.config = config
         self.translator = bot.translator
         TeamTalkPy.setLicense(
             _str(self.config.license_name), _str(self.config.license_key)
