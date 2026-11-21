@@ -52,7 +52,7 @@ class PlayPauseCommand(Command):
                         ).format(nickname=user.nickname, request=arg),
                         type=2,
                     )
-                self.run_async(self.player.play, track_list)
+                self.run_async(self.player.play, track_list, ttclient=self.ttclient)
                 return self.translator.translate("Playing {}").format(
                     track_list[0].name
                 )
@@ -87,7 +87,7 @@ class PlayUrlCommand(Command):
                         ).format(nickname=user.nickname),
                         type=2,
                     )
-                self.run_async(self.player.play, tracks)
+                self.run_async(self.player.play, tracks, ttclient=self.ttclient)
             except errors.IncorrectProtocolError:
                 return self.translator.translate("Incorrect protocol")
             except errors.ServiceError as e:
@@ -361,7 +361,7 @@ class SelectTrackCommand(Command):
                     index = number
                 else:
                     return self.translator.translate("Incorrect number")
-                self.player.play_by_index(index)
+                self.player.play_by_index(index, self.ttclient)
                 return self.translator.translate("Playing {} {}").format(
                     arg, self.player.track.name
                 )
@@ -470,7 +470,9 @@ class FavoritesCommand(Command):
     def _play(self, arg: str, user: User) -> Optional[str]:
         try:
             self.player.play(
-                self.cache.favorites[user.username], start_track_index=int(arg) - 1
+                self.cache.favorites[user.username],
+                start_track_index=int(arg) - 1,
+                ttclient=self.ttclient,
             )
         except ValueError:
             raise errors.InvalidArgumentError()
@@ -510,6 +512,7 @@ class RecentsCommand(Command):
                 self.player.play(
                     list(reversed(list(self.cache.recents))),
                     start_track_index=int(arg) - 1,
+                    ttclient=self.ttclient,
                 )
             except ValueError:
                 raise errors.InvalidArgumentError()

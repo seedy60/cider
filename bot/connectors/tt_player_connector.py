@@ -2,7 +2,7 @@ from __future__ import annotations
 import logging
 from threading import Thread
 import time
-from typing import TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING
 
 from bot.player import State
 from bot import app_vars
@@ -21,34 +21,49 @@ class TTPlayerConnector(Thread):
 
     def run(self):
         last_player_state = State.Stopped
-        # Matches the Stopped state's status text, so a fresh, idle bot does not
-        # issue a redundant status update before anything plays.
-        last_status_text = ""
+        # The server the playback belongs to; a fresh, idle bot has none.
+        last_target = None
+        # Matches each client's current status text, so a fresh, idle bot does
+        # not issue a redundant status update before anything plays.
+        last_status_texts: Dict[int, str] = {}
         self._close = False
         while not self._close:
             try:
                 state = self.player.state
-                # Voice transmission only flips on a real state change.
-                if state != last_player_state:
+                target = self._playback_target()
+                # Voice transmission only flips on a real state or target change.
+                if state != last_player_state or target is not last_target:
                     last_player_state = state
-                    if state == State.Playing:
-                        for ttclient in self.ttclients:
+                    last_target = target
+                    for ttclient in self.ttclients:
+                        if state == State.Playing and ttclient is target:
                             ttclient.enable_voice_transmission()
-                    else:
-                        for ttclient in self.ttclients:
+                        else:
                             ttclient.disable_voice_transmission()
 
                 # The status text is recomputed every tick, not just on a state
-                # change, so it follows track changes while playback stays in the
-                # Playing state (e.g. advancing through a playlist).
-                status_text = self._status_text(state)
-                if status_text != last_status_text:
-                    last_status_text = status_text
-                    for ttclient in self.ttclients:
-                        ttclient.change_status_text(status_text)
+                # change, so it follows track changes while playback stays in
+                # the Playing state (e.g. advancing through a playlist). Only the
+                # server being played on announces the track; the others keep
+                # their own status, since they are not transmitting it.
+                status_text = self._status_text(state) if target is not None else ""
+                for ttclient in self.ttclients:
+                    text = status_text if ttclient is target else ""
+                    if last_status_texts.get(id(ttclient), "") != text:
+                        last_status_texts[id(ttclient)] = text
+                        ttclient.change_status_text(text)
             except Exception:
                 logging.error("", exc_info=True)
             time.sleep(app_vars.loop_timeout)
+
+    def _playback_target(self):
+        """The client the current playback belongs to.
+
+        Playback started without an originating server (e.g. from an event
+        handler) falls back to the primary server, so a track is never sent to
+        every configured server at once.
+        """
+        return self.player.ttclient or (self.ttclients[0] if self.ttclients else None)
 
     def _status_text(self, state: State) -> str:
         """The TeamTalk status to show for the current player state.

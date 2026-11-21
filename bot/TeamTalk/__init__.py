@@ -1,4 +1,5 @@
 from __future__ import annotations
+import ctypes
 import logging
 import os
 import re
@@ -15,6 +16,21 @@ if sys.platform == "win32":
         os.add_dll_directory(os.path.join(app_vars.directory, "TeamTalk_DLL"))
     else:
         os.chdir(app_vars.directory)
+elif sys.platform != "darwin":
+    # The SDK wrapper loads the library by bare name, which only resolves when
+    # LD_LIBRARY_PATH points at TeamTalk_DLL (as Cider.sh sets it). Resolve the
+    # names against that directory so any launcher works, e.g. `uv run Cider.py`.
+    _sdk_dir = os.path.join(app_vars.directory, "TeamTalk_DLL")
+    _load_library = ctypes.cdll.LoadLibrary
+
+    def _load_sdk_library(name):
+        if isinstance(name, str) and os.path.basename(name) == name:
+            path = os.path.join(_sdk_dir, name)
+            if os.path.isfile(path):
+                name = path
+        return _load_library(name)
+
+    ctypes.cdll.LoadLibrary = _load_sdk_library
 
 from bot.TeamTalk.thread import TeamTalkThread
 from bot.TeamTalk.structs import *

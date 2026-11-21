@@ -46,8 +46,9 @@ class SoundDeviceManager:
             error = "Incorrect input device index: " + str(self.input_device_index)
             logging.error(error)
             sys.exit(error)
-        # Every server transmits the same audio, so each client captures the
-        # same (virtual) input device that the player outputs to.
+        # Each client captures the same (virtual) input device that the player
+        # outputs to; which client actually transmits is decided per playback
+        # target (see TTPlayerConnector), so a track plays on one server only.
         for ttclient in self.ttclients:
             ttclient.set_input_device(input_device_id)
         logging.debug("Sound devices initialized")

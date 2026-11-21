@@ -15,6 +15,7 @@ from bot.sound_devices import SoundDevice, SoundDeviceType
 
 if TYPE_CHECKING:
     from bot import Bot
+    from bot.TeamTalk import TeamTalk
 
 
 class Player:
@@ -43,6 +44,10 @@ class Player:
         self.state = State.Stopped
         self.mode = Mode.TrackList
         self.volume = self.config.default_volume
+        # The server the current playback belongs to. Only that server's client
+        # transmits the player's audio and announces the track; the others stay
+        # silent so a track requested on one server isn't played everywhere.
+        self.ttclient: Optional[TeamTalk] = None
 
     def initialize(self) -> None:
         logging.debug("Initializing player")
@@ -66,7 +71,10 @@ class Player:
         self,
         tracks: Optional[List[Track]] = None,
         start_track_index: Optional[int] = None,
+        ttclient: Optional[TeamTalk] = None,
     ) -> None:
+        if ttclient is not None:
+            self.ttclient = ttclient
         if tracks != None:
             self.track_list = tracks
             if not start_track_index and self.mode == Mode.Random:
@@ -92,6 +100,7 @@ class Player:
         self.track_list = []
         self.track = Track()
         self.track_index = -1
+        self.ttclient = None
 
     def _play(self, arg: str, save_to_recents: bool = True) -> None:
         if save_to_recents:
@@ -153,7 +162,9 @@ class Player:
             else:
                 raise errors.NoPreviousTrackError
 
-    def play_by_index(self, index: int) -> None:
+    def play_by_index(self, index: int, ttclient: Optional[TeamTalk] = None) -> None:
+        if ttclient is not None:
+            self.ttclient = ttclient
         if index < len(self.track_list) and index >= (0 - len(self.track_list)):
             self.track = self.track_list[index]
             self.track_index = self.track_list.index(self.track)
